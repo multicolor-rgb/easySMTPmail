@@ -7,7 +7,7 @@ $thisfile = basename(__FILE__, ".php");
 register_plugin(
     $thisfile, //Plugin id
     'easySMTPmail',     //Plugin name
-    '1.0',         //Plugin version
+    '3.0',         //Plugin version
     'multicolor',  //Plugin author
     'http://bit.ly/donate-multicolor-plugins', //author website
     'easy to use contact form with Captcha Google and smtp', //Plugin description
@@ -21,28 +21,141 @@ add_action('theme-header', 'easySMTPscript');
 # add a link in the admin tab 'theme'
 add_action('pages-sidebar', 'createSideMenu', array($thisfile, 'easySMTPmail'));
 
+add_action('theme-header', 'shortcodeEasySMTPmail');
+
+
+
+
+
 # functions
 function easySMTPsettings()
 {
     include(GSPLUGINPATH . 'easySMTPmail/settings.php');
-    
-  echo '
-  <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" style="box-sizing:border-box; display:grid; align-items:center;width:100%;grid-template-columns:1fr auto; padding:10px !important;background:#fafafa;border:solid 1px #ddd;margin-top:20px;">
-      <p style="margin:0;padding:0;">If you want to support my work via PayPal :) Thanks! </p>
-      <input type="hidden" name="cmd" value="_s-xclick" />
-      <input type="hidden" name="hosted_button_id" value="KFZ9MCBUKB7GL" />
-      <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
-      <img alt="" border="0" src="https://www.paypal.com/en_PL/i/scr/pixel.gif" width="1" height="1" />
-  </form>';
+
+    echo "
+    <style>
+    .kofi-button{text-decoration:none !important;}
+    </style>
+    <div style='text-decoration:none !important;margin:20px 0;'><script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Buy me coffe on Ko-fi', '#29abe0', 'I3I2RHQZS');kofiwidget2.draw();</script>
+    </div>";
 }
+
+function showFormEasyMail()
+{
+    if (file_exists(GSDATAOTHERPATH . 'easySMTPmail/settings.json')) {
+        $fileJS = json_decode(file_get_contents(GSDATAOTHERPATH . 'easySMTPmail/settings.json'), true);
+    };
+
+    global $SITEURL;
+
+    $form = '';
+
+    $form .= '<link rel="stylesheet" href="' . $SITEURL . 'plugins/easySMTPmail/css/style.css">';
+
+    $form .= '<form method="post" class="easySMTPform"><label for="name">';
+
+
+    if (isset($fileJS)) {
+        $form .= $fileJS['lang-name'];
+    } else {
+        $form .= 'Name:';
+    };
+
+    $form .= '</label>
+    <input type="text" name="name" required>
+    <label for="email">';
+
+    if (isset($fileJS)) {
+        $form .= $fileJS['lang-email'];
+    } else {
+        $form .= 'E-mail:';
+    };
+
+    $form .= '</label>
+    <input type="email" name="email" required>
+    <label for="phone">';
+
+    if (isset($fileJS)) {
+        $form .= $fileJS['lang-phone'];
+    } else {
+        $form .= 'Phone:';
+    };
+
+
+    $form .= '</label>
+    <input type="tel" name="phone">
+    <label for="message">';
+
+    if (isset($fileJS)) {
+        $form .= $fileJS['lang-message'];
+    } else {
+        $form .= ' Message:';
+    };
+
+    $form .= '</label>
+    <textarea name="message" rows="4" required></textarea>
+    <label for=""><input type="checkbox" required>';
+
+    if (isset($fileJS)) {
+        $form .= $fileJS['lang-privacy'];
+    } else {
+        $form .= 'I accept the privacy policy';
+    };
+
+    $form .= '
+        </label>
+        <!-- reCAPTCHA -->
+        <div class="g-recaptcha" data-sitekey="';
+
+    if (isset($fileJS)) {
+        $form .= $fileJS['siteKey'];
+        $form .= '"></div>
+        <input type="submit" name="send-easySMTPmail" value="';
+
+        if (isset($fileJS)) {
+            $form .= $fileJS['lang-submit'];
+        } else {
+            $form .= 'Send Message';
+        };
+
+        $form .= '">';
+
+        if (isset($_POST['info'])) {
+            $form .= $_POST['info'];
+        };
+
+
+        $form .= '</form>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>';
+
+
+
+        return $form;
+    }
+}
+
 
 function easySMTPform()
 {
-    include(GSPLUGINPATH . 'easySMTPmail/form.php');
+    echo showFormEasyMail();
 }
+
 
 
 function easySMTPscript()
 {
     include(GSPLUGINPATH . 'easySMTPmail/script.php');
+}
+
+function shortcodeEasySMTPmail($e = '')
+{
+
+    ///shortbox create
+    global $content;
+    $newcontent = preg_replace_callback(
+        '/\\[% easySMTPmail %\\]/i',
+        "showFormEasyMail",
+        $content
+    );
+    $content = $newcontent;
 }
